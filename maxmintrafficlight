@@ -1,0 +1,46 @@
+MaxMinTxntier = 
+VAR GreenLight = UNICHAR (128994)
+VAR RedLight = UNICHAR (128308)
+VAR YellowLight = UNICHAR (128993)
+ VAR TableValtier =
+    SUMMARIZE('Full Spool','Full Spool'[tier name], 
+    "TxnValtier", sum('Full Spool'[tierIncurrednonee]),
+    "TxnVoltier", sum('Full Spool'[nonee_VOL])
+    )
+VAR HighesttierVal = MAXX(TableValtier,[TxnValtier])
+VAR HighesttierVol = MAXX(TableValtier,[TxnVoltier])
+VAR LowesttierVal = MINX(TableValtier,[TxnValtier])
+VAR LowesttierVol = MINX(TableValtier,[TxnVoltier])
+
+RETURN
+RedLight & " tier losing highest nonee to: "&CALCULATE(MAXX(FILTER(TableValtier, [TxnValtier] = HighesttierVal), ([tier name])))&
+UNICHAR(10)&
+RedLight & " nonee Value: "&
+if(HighesttierVal<=1000, FORMAT(HighesttierVal,"₦#,##"),
+    if(HighesttierVal<=999999,FORMAT(HighesttierVal/1000,"₦#.0K"),
+        IF(HighesttierVal<=999999999,FORMAT(HighesttierVal/1000000,"₦#.0M"),
+            IF(HighesttierVal<=999999999999,FORMAT(HighesttierVal/1000000000,"₦#.0bn"),
+                if(HighesttierVal>=1000000000000,FORMAT(HighesttierVal/1000000000000,"₦#.0tn"))))))&
+UNICHAR(10)&
+RedLight & " nonee Volume: "&
+if(HighesttierVol<=1000, FORMAT(HighesttierVol,"#,##"),
+    if(HighesttierVol<=999999,FORMAT(HighesttierVol/1000,"#.0K"),
+        IF(HighesttierVol<=999999999,FORMAT(HighesttierVol/1000000,"#.0M"),
+            IF(HighesttierVol<=999999999999,FORMAT(HighesttierVol/1000000000,"#.0bn"),
+                if(HighesttierVol>=1000000000000,FORMAT(HighesttierVol/1000000000000,"#.0tn"))))))&
+UNICHAR(10)&UNICHAR(10)&
+YellowLight & " tier losing lowest nonee to: "&CALCULATE(MINX(FILTER(TableValtier, [TxnValtier] = LowesttierVal), ([tier name])))&
+UNICHAR(10)&
+YellowLight & " nonee Value: "&
+if(LowesttierVal<=1000, FORMAT(LowesttierVal,"₦#,##"),
+    if(LowesttierVal<=999999,FORMAT(LowesttierVal/1000,"₦#.0K"),
+        IF(LowesttierVal<=999999999,FORMAT(LowesttierVal/1000000,"₦#.0M"),
+            IF(LowesttierVal<=999999999999,FORMAT(LowesttierVal/1000000000,"₦#.0bn"),
+                if(LowesttierVal>=1000000000000,FORMAT(LowesttierVal/1000000000000,"₦#.0tn"))))))&
+UNICHAR(10)&
+YellowLight & " nonee Volume: "&
+if(LowesttierVol<=1000, FORMAT(LowesttierVol,"#,##"),
+    if(LowesttierVol<=999999,FORMAT(LowesttierVol/1000,"#.0K"),
+        IF(LowesttierVol<=999999999,FORMAT(LowesttierVol/1000000,"#.0M"),
+            IF(LowesttierVol<=999999999999,FORMAT(LowesttierVol/1000000000,"#.0bn"),
+                if(LowesttierVol>=1000000000000,FORMAT(LowesttierVol/1000000000000,"#.0tn"))))))
