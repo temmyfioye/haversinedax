@@ -1,0 +1,17 @@
+Distance = MAX(CMTbl[CM_ID]) & " to " & MAX(ROU_Data[CM_id])
+
+From Title = IF( HASONEFILTER(CMTbl[CM_ID]), MAX(CMIDTbl[CM_ID]),"No City Seleted")
+
+
+Kilometers = 
+var Lat1 = MIN(CMTbl[latitude])
+var Lng1 = MIN(CMTbl[longitude])
+
+var Lat2 = MIN(ROU_Data[latitude])
+var Lng2 = MIN(ROU_Data[longitude])
+
+---- Also assign this as variable -----
+var P = DIVIDE( PI(), 180 )
+var A = 0.5 - COS((Lat2-Lat1) * p)/2 + COS(Lat1 * p) * COS(lat2 * P) * (1-COS((Lng2- Lng1) * p))/2
+var final = 12742 * ASIN((SQRT(A)))
+return final
