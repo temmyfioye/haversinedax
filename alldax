@@ -1,0 +1,541 @@
+% Changepreviousmonthshow = 
+
+VAR calculationofchange = DIVIDE([totalshow], CALCULATE([totalshow], PREVIOUSMONTH('Calendar'[Date])), blank())-1
+VAR arrowtype =
+if( calculationofchange  < 0, UNICHAR ( 11167 ), UNICHAR (11165) )
+return
+IF(ISFILTERED(tier_code[tier_NAME]),"",
+format(calculationofchange,"#%")&" "&arrowtype)
+--
+% ChangepreviousmonthVOL = 
+VAR calculationofchangeVOL = DIVIDE([totalVOL], CALCULATE([totalVOL], PREVIOUSMONTH('Calendar'[Date])), blank())-1
+VAR arrowtype =
+if( calculationofchangeVOL  < 0, UNICHAR ( 11167 ), UNICHAR (11165) )
+return
+IF(ISFILTERED(tier_code[tier_NAME]),"",
+format(calculationofchangeVOL,"#%")&" "&arrowtype)
+---
+DailyTxnSummary = 
+VAR blackcircle = UNICHAR (9899)
+VAR TableVolTxn =
+    SUMMARIZE(cl_NEW_TRANX,Calendar[Date], 
+    "TxnVol", sum(cl_NEW_TRANX[VOL]) --summarize the table to get the dates and transaction volume
+    )
+VAR HighestTxnVol = MAXX(TableVolTxn,[TxnVol]) ---highest transaction volume
+VAR LowestTxnVol = MINX(TableVolTxn,[TxnVol]) -- lowest transaction volume
+VAR FormatedHighestTxnVol = if(HighestTxnVol<=1000, FORMAT(HighestTxnVol,"#,##"),
+    if(HighestTxnVol<=999999,FORMAT(HighestTxnVol/1000,"#.0K"),
+        IF(HighestTxnVol<=999999999,FORMAT(HighestTxnVol/1000000,"#.0M"),
+            IF(HighestTxnVol<=999999999999,FORMAT(HighestTxnVol/1000000000,"#.0bn"),
+                if(HighestTxnVol>=1000000000000,FORMAT(HighestTxnVol/1000000000000,"#.0tn"))))))--format the highest transaction volume
+VAR FormatedLowestTxnVol = if(LowestTxnVol<=1000, FORMAT(LowestTxnVol,"#,##"),
+    if(LowestTxnVol<=999999,FORMAT(LowestTxnVol/1000,"#.0K"),
+        IF(LowestTxnVol<=999999999,FORMAT(LowestTxnVol/1000000,"#.0M"),
+            IF(LowestTxnVol<=999999999999,FORMAT(LowestTxnVol/1000000000,"#.0bn"),
+                if(LowestTxnVol>=1000000000000,FORMAT(LowestTxnVol/1000000000000,"#.0tn"))))))--format the lowest transaction volume
+
+RETURN
+blackcircle & " For "&SELECTEDVALUE('Calendar'[Month],"the selected Month(s)")&", the day with the Highest Transaction volume is "&
+CALCULATE(MAXX(FILTER(TableVolTxn, [TxnVol] = HighestTxnVol), format((Calendar[Date]),"dd-MMM-yyyy"))&" with a volume of "&FormatedHighestTxnVol&" transactions."&unichar(10)&
+blackcircle&" While the day with the Lowest Transaction volume is "&
+CALCULATE(MAXX(FILTER(TableVolTxn, [TxnVol] = LowestTxnVol), format((Calendar[Date]),"dd-MMM-yyyy"))&" with a volume of "&FormatedLowestTxnVol&" transactions."))
+--
+DailyTxnSummary2 = 
+VAR blackcircle = UNICHAR (9899)
+VAR TableVolTxn =
+    SUMMARIZE(cl_NEW_TRANX,Calendar[Date], 
+    "TxnVol", sum(cl_NEW_TRANX[VOL]) --summarize the table to get the dates and transaction volume
+    )
+VAR HighestTxnVol = MAXX(TableVolTxn,[TxnVol]) ---highest transaction volume
+VAR LowestTxnVol = MINX(TableVolTxn,[TxnVol]) -- lowest transaction volume
+VAR FormatedHighestTxnVol = if(HighestTxnVol<=1000, FORMAT(HighestTxnVol,"#,##"),
+    if(HighestTxnVol<=999999,FORMAT(HighestTxnVol/1000,"#.0K"),
+        IF(HighestTxnVol<=999999999,FORMAT(HighestTxnVol/1000000,"#.0M"),
+            IF(HighestTxnVol<=999999999999,FORMAT(HighestTxnVol/1000000000,"#.0bn"),
+                if(HighestTxnVol>=1000000000000,FORMAT(HighestTxnVol/1000000000000,"#.0tn"))))))--format the highest transaction volume
+VAR FormatedLowestTxnVol = if(LowestTxnVol<=1000, FORMAT(LowestTxnVol,"#,##"),
+    if(LowestTxnVol<=999999,FORMAT(LowestTxnVol/1000,"#.0K"),
+        IF(LowestTxnVol<=999999999,FORMAT(LowestTxnVol/1000000,"#.0M"),
+            IF(LowestTxnVol<=999999999999,FORMAT(LowestTxnVol/1000000000,"#.0bn"),
+                if(LowestTxnVol>=1000000000000,FORMAT(LowestTxnVol/1000000000000,"#.0tn"))))))--format the lowest transaction volume
+
+RETURN
+blackcircle & " For "&SELECTEDVALUE('Calendar'[Month],"the selected Month(s)")&", the day with the Highest Transaction volume is "&
+CALCULATE(MAXX(FILTER(TableVolTxn, [TxnVol] = HighestTxnVol), format((Calendar[Date]),"dd-MMM-yyyy"))&" with a volume of "&FormatedHighestTxnVol&" transactions."&unichar(10)&
+blackcircle&" While the day with the Lowest Transaction volume is "&
+CALCULATE(MAXX(FILTER(TableVolTxn, [TxnVol] = LowestTxnVol), format((Calendar[Date]),"dd-MMM-yyyy"))&" with a volume of "&FormatedLowestTxnVol&" transactions."))
+--
+distinctshowtee = 
+VAR eerows=
+    COUNTROWS(
+  SUMMARIZE(
+     FILTER(cl_NEW_TRANX ,cl_NEW_TRANX[nonee_STATUS] ="ON US"),
+    [shower]
+))
+var allrows = DISTINCTCOUNT(cl_NEW_TRANX[shower])
+var formated_ee_rows = 
+if(eerows<=1000, FORMAT(eerows,"#.##"),
+    if(eerows<=999999,FORMAT(eerows/1000,"#.##K"),
+        IF(eerows<=999999999,FORMAT(eerows/1000000,"#.##M"),
+            IF(eerows<=999999999999,FORMAT(eerows/1000000000,"#.##bn"),
+                if(eerows>=1000000000000,FORMAT(eerows/1000000000000,"#.##tn"))))))
+var eeoverallrows = (eerows/allrows)
+var formatted_eeoverallrows = FORMAT(eeoverallrows,"#%")
+return if(ISBLANK(eeoverallrows),"No transaction",formated_ee_rows &" ("&formatted_eeoverallrows&")")
+--
+distinctshowtnonee = 
+VAR noneesrows=
+    COUNTROWS(
+  SUMMARIZE(
+     FILTER(cl_NEW_TRANX ,cl_NEW_TRANX[nonee_STATUS] ="nonee"),
+    [shower]
+))
+var allrows = DISTINCTCOUNT(cl_NEW_TRANX[shower])
+var formated_nonee_rows = 
+if(noneesrows<=1000, FORMAT(noneesrows,"#.##"),
+    if(noneesrows<=999999,FORMAT(noneesrows/1000,"#.##K"),
+        IF(noneesrows<=999999999,FORMAT(noneesrows/1000000,"#.##M"),
+            IF(noneesrows<=999999999999,FORMAT(noneesrows/1000000000,"#.##bn"),
+                if(noneesrows>=1000000000000,FORMAT(noneesrows/1000000000000,"#.##tn"))))))
+var noneeoverallrows = (noneesrows/allrows)
+var formatted_noneeoverallrows = FORMAT(noneeoverallrows,"#%")
+return if(ISBLANK(noneesrows),"No transaction",formated_nonee_rows &" ("&formatted_noneeoverallrows&")")
+--
+HourlyTxnSummary = 
+VAR blackcircle = UNICHAR (9899)
+VAR TableVolTxnH =
+    SUMMARIZE(cl_NEW_TRANX,cl_NEW_TRANX[ampmhour], 
+    "TxnVolH", sum(cl_NEW_TRANX[VOL]) --summarize the table to get the HOUR and transaction volume
+    )
+VAR HighestTxnVolH = MAXX(TableVolTxnH,[TxnVolH]) ---highest transaction volume
+VAR LowestTxnVolH = MINX(TableVolTxnH,[TxnVolH]) -- lowest transaction volume
+VAR HighestTransactionHour = CALCULATE(MAXX(FILTER(TableVolTxnH, [TxnVolH] = HighestTxnVolH), cl_NEW_TRANX[ampmhour])) -- highest transaction hour
+VAR LowestTransactionHour = CALCULATE(MINX(FILTER(TableVolTxnH, [TxnVolH] = LowestTxnVolH), cl_NEW_TRANX[ampmhour])) -- LOWEST transaction hour
+VAR FormatedHighestTxnVolH = if(HighestTxnVolH<=1000, FORMAT(HighestTxnVolH,"#,##"),
+    if(HighestTxnVolH<=999999,FORMAT(HighestTxnVolH/1000,"#.0K"),
+        IF(HighestTxnVolH<=999999999,FORMAT(HighestTxnVolH/1000000,"#.0M"),
+            IF(HighestTxnVolH<=999999999999,FORMAT(HighestTxnVolH/1000000000,"#.0bn"),
+                if(HighestTxnVolH>=1000000000000,FORMAT(HighestTxnVolH/1000000000000,"#.0tn"))))))--format the highest transaction volume
+VAR FormattedLowestTxnVolH = if(LowestTxnVolH<=1000, FORMAT(LowestTxnVolH,"#,##"),
+    if(LowestTxnVolH<=999999,FORMAT(LowestTxnVolH/1000,"#.0K"),
+        IF(LowestTxnVolH<=999999999,FORMAT(LowestTxnVolH/1000000,"#.0M"),
+            IF(LowestTxnVolH<=999999999999,FORMAT(LowestTxnVolH/1000000000,"#.0bn"),
+                if(LowestTxnVolH>=1000000000000,FORMAT(LowestTxnVolH/1000000000000,"#.0tn"))))))--format the lowest transaction volume
+
+RETURN
+
+blackcircle & " For the selected dates, the hour with the Highest Transaction volume is "&HighestTransactionHour&" with total transaction volume of "&FormatedHighestTxnVolH&" while the hour with the Lowest Transaction volume is "&LowestTransactionHour&" with total transaction volume of "&FormattedLowestTxnVolH
+--
+eetxnvolume = 
+ VAR eevol = CALCULATE (
+    SUM (cl_NEW_TRANX[VOL]),
+    FILTER (
+        cl_NEW_TRANX ,cl_NEW_TRANX[nonee_STATUS] ="ON US"
+    )
+) -- sum of on us transactions
+var allrows = SUM(cl_NEW_TRANX[VOL]) -- sum of all rows
+var formated_ee_vol = 
+if(eevol<=1000, FORMAT(eevol,"#.##"),
+    if(eevol<=999999,FORMAT(eevol/1000,"#.##K"),
+        IF(eevol<=999999999,FORMAT(eevol/1000000,"#.##M"),
+            IF(eevol<=999999999999,FORMAT(eevol/1000000000,"#.##bn"),
+                if(eevol>=1000000000000,FORMAT(eevol/1000000000000,"#.##tn")))))) --create formated sum of on us volume
+var eeoverallvol = (eevol/allrows) -- sum of on us volume divided by sum of all rows
+var formatted_eeoverallvol = FORMAT(eeoverallvol,"#%") --formated sum of all rows
+return if(ISBLANK(eevol),"No transaction",formated_ee_vol &" ("&formatted_eeoverallvol&")")
+
+--
+previousmonth_show = CALCULATE([totalshow], PREVIOUSMONTH('Calendar'[Date]))
+--
+previousmonth_VOL = CALCULATE([totalVOL], PREVIOUSMONTH('Calendar'[Date]))
+--
+noneebystate = 
+VAR whitecircle = UNICHAR (9898)
+VAR TblnoneeVolume =
+    SUMMARIZE(CM_geocode_table,CM_geocode_table[state1],
+    "TxnnoneeVol",sum(cl_NEW_TRANX[VOL]) --summarize the table to get the dates and transaction volume
+    )
+    VAR highestnoneevol = MAXX(TblnoneeVolume,[TxnnoneeVol]) -- highest nonee volume
+    VAR higheststate = FILTER(TblnoneeVolume,CM_geocode_table[state1])
+    VAR percent_highestnoneevol = highestnoneevol/sum(cl_NEW_TRANX[VOL])
+    VAR F_percent_highestnoneevol = FORMAT(percent_highestnoneevol, "#%")
+    VAR f_highestnoneevol= if(highestnoneevol<=1000, FORMAT(highestnoneevol,"#,##"),
+    if(highestnoneevol<=999999,FORMAT(highestnoneevol/1000,"#.0K"),
+        IF(highestnoneevol<=999999999,FORMAT(highestnoneevol/1000000,"#.0M"),
+            IF(highestnoneevol<=999999999999,FORMAT(highestnoneevol/1000000000,"#.0bn"),
+                if(highestnoneevol>=1000000000000,FORMAT(highestnoneevol/1000000000000,"#.0tn"))))))
+return
+whitecircle&" The state with the Highest nonee Volume is "&CALCULATE(MAXX(FILTER(TblnoneeVolume, [TxnnoneeVol] = highestnoneevol), CM_geocode_table[state1])&" with Total Transaction Volume of "&f_highestnoneevol&" which makes up "&F_percent_highestnoneevol&" of the total transaction volume.")--
+--
+noneebystate = 
+VAR whitecircle = UNICHAR (9898)
+VAR TblnoneeVolume =
+    SUMMARIZE(CM_geocode_table,CM_geocode_table[state1],
+    "TxnnoneeVol",sum(cl_NEW_TRANX[VOL]) --summarize the table to get the dates and transaction volume
+    )
+    VAR highestnoneevol = MAXX(TblnoneeVolume,[TxnnoneeVol]) -- highest nonee volume
+    VAR higheststate = FILTER(TblnoneeVolume,CM_geocode_table[state1])
+    VAR percent_highestnoneevol = highestnoneevol/sum(cl_NEW_TRANX[VOL])
+    VAR F_percent_highestnoneevol = FORMAT(percent_highestnoneevol, "#%")
+    VAR f_highestnoneevol= if(highestnoneevol<=1000, FORMAT(highestnoneevol,"#,##"),
+    if(highestnoneevol<=999999,FORMAT(highestnoneevol/1000,"#.0K"),
+        IF(highestnoneevol<=999999999,FORMAT(highestnoneevol/1000000,"#.0M"),
+            IF(highestnoneevol<=999999999999,FORMAT(highestnoneevol/1000000000,"#.0bn"),
+                if(highestnoneevol>=1000000000000,FORMAT(highestnoneevol/1000000000000,"#.0tn"))))))
+return
+whitecircle&" The state with the Highest nonee Volume is "&CALCULATE(MAXX(FILTER(TblnoneeVolume, [TxnnoneeVol] = highestnoneevol), CM_geocode_table[state1])&" with Total Transaction Volume of "&f_highestnoneevol&" which makes up "&F_percent_highestnoneevol&" of the total transaction volume.")
+--
+noneeSPLITSUMMARY = 
+VAR whitecircle = UNICHAR (9898)
+VAR noneerows = COUNTROWS( --noneeROWS -- count of noneewrows
+  SUMMARIZE(
+     FILTER(cl_NEW_TRANX ,cl_NEW_TRANX[nonee_STATUS] ="nonee"),
+    [shower]
+))
+var formated_noneerows = --formatted count of noneerows
+if(noneerows<=1000, FORMAT(noneerows,"#.##"),
+    if(noneerows<=999999,FORMAT(noneerows/1000,"#.##K"),
+        IF(noneerows<=999999999,FORMAT(noneerows/1000000,"#.##M"),
+            IF(noneerows<=999999999999,FORMAT(noneerows/1000000000,"#.##bn"),
+                if(noneerows>=1000000000000,FORMAT(noneerows/1000000000000,"#.##tn"))))))
+--getting the month with the highest distinct customer count for nonee
+VAR TblCustomerCount =
+    SUMMARIZE(
+        FILTER(cl_NEW_TRANX,cl_NEW_TRANX[nonee_STATUS]="nonee"),'Calendar'[Month],
+    "TxnCustomercount",DISTINCTCOUNT(cl_NEW_TRANX[shower]) --summarize the table to get the dates and transaction volume
+    )
+    VAR Lowestcustomercount = MINX(TblCustomerCount,[TxnCustomercount]) -- lowest customercount
+    VAR lowestcustomermonth = MINX(TblCustomerCount,'Calendar'[Month])--lowest customer month 
+    VAR formatedlowestcustomercount= if(Lowestcustomercount<=1000, FORMAT(Lowestcustomercount,"#,##"),
+    if(Lowestcustomercount<=999999,FORMAT(Lowestcustomercount/1000,"#.0K"),
+        IF(Lowestcustomercount<=999999999,FORMAT(Lowestcustomercount/1000000,"#.0M"),
+            IF(Lowestcustomercount<=999999999999,FORMAT(Lowestcustomercount/1000000000,"#.0bn"),
+                if(Lowestcustomercount>=1000000000000,FORMAT(Lowestcustomercount/1000000000000,"#.0tn"))))))
+VAR ourows = COUNTROWS( --count of ourows
+  SUMMARIZE(
+     FILTER(cl_NEW_TRANX ,cl_NEW_TRANX[nonee_STATUS] ="ON US"),
+    [shower]
+))
+var formated_ourows = --formated count of ourows
+if(ourows<=1000, FORMAT(ourows,"#.##"),
+    if(ourows<=999999,FORMAT(ourows/1000,"#.##K"),
+        IF(ourows<=999999999,FORMAT(ourows/1000000,"#.##M"),
+            IF(ourows<=999999999999,FORMAT(ourows/1000000000,"#.##bn"),
+                if(ourows>=1000000000000,FORMAT(ourows/1000000000000,"#.##tn"))))))
+
+VAR noneevolume = CALCULATE (
+    SUM (cl_NEW_TRANX[VOL]),
+    FILTER (
+        cl_NEW_TRANX ,cl_NEW_TRANX[nonee_STATUS] ="nonee"
+    )
+) -- sum of nonee volume and formated sum of nonee volume below
+var formated_noneevolume = 
+if(noneevolume<=1000, FORMAT(noneevolume,"#.##"),
+    if(noneevolume<=999999,FORMAT(noneevolume/1000,"#.##K"),
+        IF(noneevolume<=999999999,FORMAT(noneevolume/1000000,"#.##M"),
+            IF(noneevolume<=999999999999,FORMAT(noneevolume/1000000000,"#.##bn"),
+                if(noneevolume>=1000000000000,FORMAT(noneevolume/1000000000000,"#.##tn"))))))
+--sum of ou volume and formatted sum of ou volume below
+VAR ouvolume = CALCULATE (
+    SUM (cl_NEW_TRANX[VOL]),
+    FILTER (
+        cl_NEW_TRANX ,cl_NEW_TRANX[nonee_STATUS] ="ON US"
+    )
+) 
+var formated_ouvolume = 
+if(ouvolume<=1000, FORMAT(ouvolume,"#.##"),
+    if(ouvolume<=999999,FORMAT(ouvolume/1000,"#.##K"),
+        IF(ouvolume<=999999999,FORMAT(ouvolume/1000000,"#.##M"),
+            IF(ouvolume<=999999999999,FORMAT(ouvolume/1000000000,"#.##bn"),
+                if(ouvolume>=1000000000000,FORMAT(ouvolume/1000000000000,"#.##tn"))))))
+
+VAR TblCustomervolume =
+    SUMMARIZE(
+        FILTER(cl_NEW_TRANX,cl_NEW_TRANX[nonee_STATUS]="nonee"),'Calendar'[Month],
+    "TxnCustomervol",sum(cl_NEW_TRANX[VOL]) --summarize the table to get the dates and transaction volume
+    )
+    VAR Lowestcustomervolume = MINX(TblCustomervolume,[TxnCustomervol]) -- lowest txn volume
+    VAR lowestcustomermonthvol = MINX(TblCustomervolume,'Calendar'[Month])--lowest customer month 
+    VAR formatedlowestcustomervol= if(Lowestcustomervolume<=1000, FORMAT(Lowestcustomervolume,"#,##"),
+    if(Lowestcustomervolume<=999999,FORMAT(Lowestcustomervolume/1000,"#.0K"),
+        IF(Lowestcustomervolume<=999999999,FORMAT(Lowestcustomervolume/1000000,"#.0M"),
+            IF(Lowestcustomervolume<=999999999999,FORMAT(Lowestcustomervolume/1000000000,"#.0bn"),
+                if(Lowestcustomervolume>=1000000000000,FORMAT(Lowestcustomervolume/1000000000000,"#.0tn"))))))--format the lowest transaction volume
+Return
+if(ISBLANK(noneerows),whitecircle&"No transactions were generated for the selected tier(s).",
+IF(ISFILTERED(tier_code[tier_NAME]),
+whitecircle&" For the period under consideration, a total of ~"&formated_noneerows&" unique showers did at least one ATM nonee. Compared to other months, the month of "&lowestcustomermonth&" had the lowest unique customer count in terms of nonee with a total count of "&formatedlowestcustomercount&unichar(10)&
+whitecircle&" With regards to volume of transactions, a total of ~"&formated_noneevolume&" was done as nonee transaction volume. Also, compared to other months, the month of "&lowestcustomermonthvol&" had the lowest transaction volume in terms of nonee with a total transaction volume of "&formatedlowestcustomervol&".",
+whitecircle&" For the period under consideration, a total of ~"&formated_noneerows&" unique showers did at least one ATM nonee transaction while a total of "&formated_ourows& " unique showers did at least one ATM OU transaction. Compared to other months, the month of "&lowestcustomermonth&" had the lowest unique customer count in terms of nonee with a total count of "&formatedlowestcustomercount&unichar(10)&
+whitecircle&" With regards to volume of transactions, a total of ~"&formated_noneevolume&" was done as nonee transaction volume while a total of "&formated_ouvolume&" was done as OU transaction volume. Also, compared to other months, the month of "&lowestcustomermonthvol&" had the lowest transaction volume in terms of nonee with a total transaction volume of "&formatedlowestcustomervol&"."
+))
+--
+noneetxnvolume = 
+ VAR noneevol = CALCULATE (
+    SUM (cl_NEW_TRANX[VOL]),
+    FILTER (
+        cl_NEW_TRANX ,cl_NEW_TRANX[nonee_STATUS] ="nonee"
+    )
+) -- sum of nonee transactions
+var allrows = SUM(cl_NEW_TRANX[VOL]) -- sum of all rows
+var formated_nonee_vol = 
+if(noneevol<=1000, FORMAT(noneevol,"#.##"),
+    if(noneevol<=999999,FORMAT(noneevol/1000,"#.##K"),
+        IF(noneevol<=999999999,FORMAT(noneevol/1000000,"#.##M"),
+            IF(noneevol<=999999999999,FORMAT(noneevol/1000000000,"#.##bn"),
+                if(noneevol>=1000000000000,FORMAT(noneevol/1000000000000,"#.##tn")))))) --create formated sum of nonee volume
+var noneeoverallvol = (noneevol/allrows) -- sum of nonee volume divided by sum of all rows
+var formatted_nonee_vol = FORMAT(noneeoverallvol,"#%") --formated sum of all rows
+return if(ISBLANK(noneevol),"No transaction",formated_nonee_vol &" ("&formatted_nonee_vol&")")
+--
+SummarypageText = 
+VAR whitecircle = UNICHAR (9898)
+var allrows = DISTINCTCOUNT(cl_NEW_TRANX[shower]) -- count distinct shower ID
+var formated_allrows = 
+if(allrows<=1000, FORMAT(allrows,"#.##"),
+    if(allrows<=999999,FORMAT(allrows/1000,"#.##K"),
+        IF(allrows<=999999999,FORMAT(allrows/1000000,"#.##M"),
+            IF(allrows<=999999999999,FORMAT(allrows/1000000000,"#.##bn"),
+                if(allrows>=1000000000000,FORMAT(allrows/1000000000000,"#.##tn"))))))
+--return noneesrows &" ("&formatted_eeoverallrows&")"
+return
+if(ISBLANK(allrows),whitecircle&"No transactions were generated for the selected tiers and months",
+whitecircle & " For "&SELECTEDVALUE('Calendar'[Month]," the selected Month(s)")&" and "& SELECTEDVALUE(tier_code[tier_NAME]," the selected tier(s)")&", a total of ~ "&formated_allrows&" unique customers have generated ATM transaction using cl Debit card."
+&UNICHAR(10)&whitecircle&[distinctshowtnonee]&" of the debit cardholders used  their cl cards on other tiers ATM Machine thereby incurring Remote On Us charges on cl."
+&UNICHAR(10)&whitecircle&[distinctshowtee]&" of customers who generated ATM transactions use their cl debit cards on cl CMs."
+&UNICHAR(10)&whitecircle&" Altogether, a total of " &[noneetxnvolume]&" Remote on Us transactions were generated between the time frame.")
+--
+totalshow = DISTINCTCOUNT(cl_NEW_TRANX[shower])
+--
+totalVOL = SUM(cl_NEW_TRANX[VOL])
+--
+formattednoneefrequcny = 
+VAR noneerows =DISTINCTCOUNT(nonee_FREQ_NARR[shower])
+var formated_noneerows = --formatted count of noneerows
+if(noneerows<=1000, FORMAT(noneerows,"#"),
+    if(noneerows<=999999,FORMAT(noneerows/1000,"#.##K"),
+        IF(noneerows<=999999999,FORMAT(noneerows/1000000,"#.##M"),
+            IF(noneerows<=999999999999,FORMAT(noneerows/1000000000,"#.##bn"),
+                if(noneerows>=1000000000000,FORMAT(noneerows/1000000000000,"#.##tn"))))))
+return formated_noneerows
+--
+noneeTXNACTIVITYSUMMARY = 
+VAR whitecircle = UNICHAR (9898)
+VAR noneerows = COUNTROWS( --noneeROWS -- count of noneewrows
+  SUMMARIZE(
+     FILTER(cl_NEW_TRANX ,cl_NEW_TRANX[nonee_STATUS] ="nonee"),
+    [shower]
+))
+var formated_noneerows = --formatted count of noneerows
+if(noneerows<=1000, FORMAT(noneerows,"#.##"),
+    if(noneerows<=999999,FORMAT(noneerows/1000,"#.##K"),
+        IF(noneerows<=999999999,FORMAT(noneerows/1000000,"#.##M"),
+            IF(noneerows<=999999999999,FORMAT(noneerows/1000000000,"#.##bn"),
+                if(noneerows>=1000000000000,FORMAT(noneerows/1000000000000,"#.##tn"))))))
+
+VAR noneevolume = CALCULATE (
+    SUM (cl_NEW_TRANX[VOL]),
+    FILTER (
+        cl_NEW_TRANX ,cl_NEW_TRANX[nonee_STATUS] ="nonee"
+    )
+) -- sum of nonee volume and formated sum of nonee volume below
+var formated_noneevolume = 
+if(noneevolume<=1000, FORMAT(noneevolume,"#.##"),
+    if(noneevolume<=999999,FORMAT(noneevolume/1000,"#.##K"),
+        IF(noneevolume<=999999999,FORMAT(noneevolume/1000000,"#.##M"),
+            IF(noneevolume<=999999999999,FORMAT(noneevolume/1000000000,"#.##bn"),
+                if(noneevolume>=1000000000000,FORMAT(noneevolume/1000000000000,"#.##tn"))))))
+
+VAR TblCustomervolume =
+    SUMMARIZE(
+        FILTER(cl_NEW_TRANX,cl_NEW_TRANX[nonee_STATUS]="nonee"),'Calendar'[Month],
+    "TxnCustomervol",sum(cl_NEW_TRANX[VOL]) --summarize the table to get the dates and transaction volume
+    )
+    VAR highestcustomervolume = MAXX(TblCustomervolume,[TxnCustomervol]) -- HIGHEST txn volume
+    VAR formatedhighestcustomervol= if(highestcustomervolume<=1000, FORMAT(highestcustomervolume,"#,##"),
+    if(highestcustomervolume<=999999,FORMAT(highestcustomervolume/1000,"#.0K"),
+        IF(highestcustomervolume<=999999999,FORMAT(highestcustomervolume/1000000,"#.0M"),
+            IF(highestcustomervolume<=999999999999,FORMAT(highestcustomervolume/1000000000,"#.0bn"),
+                if(highestcustomervolume>=1000000000000,FORMAT(highestcustomervolume/1000000000000,"#.0tn"))))))--format the highest transaction volume
+Return
+if(ISBLANK(noneerows),whitecircle&"No transactions for the selected tier(s)",
+IF(ISFILTERED(tier_code[tier_NAME]),
+whitecircle&" For the period under consideration, a total of ~"&formated_noneerows&" unique showers did at least one ATM nonee generating ~"&formated_noneevolume&" nonee Volume."&UNICHAR(10)
+&whitecircle&" In "&CALCULATE(MAXX(FILTER(TblCustomervolume, [TxnCustomervol] = highestcustomervolume),'Calendar'[Month]))&", the tier incurred the highest nonee volume with total transaction volume of "&formatedhighestcustomervol&".",
+whitecircle&" For the period under consideration, a total of ~"&formated_noneerows&" unique showers did at least one ATM nonee generating ~"&formated_noneevolume&" nonee Volume. "&UNICHAR(10)
+&whitecircle&" In "&CALCULATE(MAXX(FILTER(TblCustomervolume, [TxnCustomervol] = highestcustomervolume),'Calendar'[Month]))&", the tier incurred the highest nonee volume with total transaction volume of "&formatedhighestcustomervol&"."
+))
+--
+txnmatrixsummary = 
+VAR whitecircle = UNICHAR (9898)
+VAR morethan3noneerows = COUNTROWS( --noneeROWS -- count of noneewrows
+  SUMMARIZE(
+     FILTER(nonee_FREQ_NARR,nonee_FREQ_NARR[noneeBAND] =">3 nonee"),
+    [shower]
+))
+VAR morethan3_2MONTHS = COUNTROWS( --noneeROWS -- count of noneewrows
+  SUMMARIZE(
+     FILTER(nonee_FREQ_NARR,nonee_FREQ_NARR[noneeBAND] =">3 nonee"&& nonee_FREQ_NARR[FREQUENCY]="2 Months"),
+    [shower]
+))
+VAR morethan3_1MONTH = COUNTROWS( --noneeROWS -- count of noneewrows
+  SUMMARIZE(
+     FILTER(nonee_FREQ_NARR,nonee_FREQ_NARR[noneeBAND] =">3 nonee"&&nonee_FREQ_NARR[FREQUENCY]="1 Month"),
+    [shower]
+))
+VAR morethan3_3MONTH = COUNTROWS( --noneeROWS -- count of noneewrows
+  SUMMARIZE(
+     FILTER(nonee_FREQ_NARR,nonee_FREQ_NARR[noneeBAND] =">3 nonee"&&nonee_FREQ_NARR[FREQUENCY]="3 Months"),
+    [shower]
+))
+VAR allnoneerows =DISTINCTCOUNT(nonee_FREQ_NARR[shower])
+VAR percentmorethan3 = morethan3noneerows/allnoneerows
+VAR percentmorethan3_2MONTHS = morethan3_2MONTHS/allnoneerows
+VAR percentmorethan3_1MONTH = morethan3_1MONTH/allnoneerows
+VAR percentmorethan3_3MONTH = morethan3_3MONTH/allnoneerows
+VAR F_percentmorethan3_2MONTHS =format(percentmorethan3_2MONTHS,"#%")
+VAR F_percentmorethan3_1MONTH = Format(percentmorethan3_1MONTH,"#%")
+VAR F_morethan3_3MONTH = FORMAT(percentmorethan3_3MONTH,"#%")
+VAR F_percentmorethan3 =format(percentmorethan3,"#%")
+VAR percentmorethan3NUM = FORMAT(percentmorethan3,"#.##")
+Return 
+if(ISBLANK(morethan3noneerows),if(ISBLANK(percentmorethan3_2MONTHS),if(ISBLANK(percentmorethan3_1MONTH),if(ISBLANK(percentmorethan3_3MONTH),whitecircle&"No transactions generated for the selected tier(s)"))),
+whitecircle&" "&F_percentmorethan3&
+" of the customers who generated nonee within the observed period generated >3 nonee."&unichar(10)&
+whitecircle&"Of those "&F_percentmorethan3&", "&F_percentmorethan3_2MONTHS&" generated transactions in 2 Months out of 3, "&F_percentmorethan3_1MONTH&" generated transactions in 1 Month out of 3, while "&F_morethan3_3MONTH&" generated transactions in all 3 Months.")
+--
+formatedkm = FORMAT([Kilometers],"#.##")&" km"
+--
+Kilometers = 
+var Lat1 = MIN(CM_geocode_table[latitude_x])
+var Lng1 = MIN(CM_geocode_table[longitude_x])
+
+var Lat2 = MIN(clCMS[latitude_x])
+var Lng2 = MIN(clCMS[longitude_x])
+
+---- Also assign this as variable -----
+var P = DIVIDE( PI(), 180 )
+var A = 0.5 - COS((Lat2-Lat1) * p)/2 + COS(Lat1 * p) * COS(lat2 * P) * (1-COS((Lng2- Lng1) * p))/2
+var final = 6371 * ASIN((SQRT(A)))
+--VAR FORMATED_FINAL = FORMAT(final,"#.## KM")
+return 
+final
+--
+nearestclCM = 
+VAR whitecircle = UNICHAR (9898)
+var Lat1 = MIN(CM_geocode_table[latitude_x])
+var Lng1 = MIN(CM_geocode_table[longitude_x])
+
+var Lat2 = MIN(clCMS[latitude_x])
+var Lng2 = MIN(clCMS[longitude_x])
+
+---- Also assign this as variable -----
+var P = DIVIDE( PI(), 180 )
+var A = 0.5 - COS((Lat2-Lat1) * p)/2 + COS(Lat1 * p) * COS(lat2 * P) * (1-COS((Lng2- Lng1) * p))/2
+var final = 12742 * ASIN((SQRT(A)))
+VAR closestCM =
+    SUMMARIZE(
+       FILTER(clCMS,clCMS[Kilometers]=final),clCMS[clADDRESSCLUSTER],
+    "closestCM",[Kilometers]) --summarize the table to get address cluster and kilometers
+    VAR closestCMaddress = MINX(closestCM,[clADDRESSCLUSTER]) -- closest addresscluster
+    VAR closestkm = MINX(closestCM,[Kilometers])--the distance
+    return
+whitecircle&"The closest cl CM to the selected address cluster is "&closestCMaddress
+--
+formattednoneefrequcny = 
+VAR noneerows =DISTINCTCOUNT(nonee_FREQ_NARR[shower])
+var formated_noneerows = --formatted count of noneerows
+if(noneerows<=1000, FORMAT(noneerows,"#"),
+    if(noneerows<=999999,FORMAT(noneerows/1000,"#.##K"),
+        IF(noneerows<=999999999,FORMAT(noneerows/1000000,"#.##M"),
+            IF(noneerows<=999999999999,FORMAT(noneerows/1000000000,"#.##bn"),
+                if(noneerows>=1000000000000,FORMAT(noneerows/1000000000000,"#.##tn"))))))
+return formated_noneerows
+--
+noneeTXNACTIVITYSUMMARY = 
+VAR whitecircle = UNICHAR (9898)
+VAR noneerows = COUNTROWS( --noneeROWS -- count of noneewrows
+  SUMMARIZE(
+     FILTER(cl_NEW_TRANX ,cl_NEW_TRANX[nonee_STATUS] ="nonee"),
+    [shower]
+))
+var formated_noneerows = --formatted count of noneerows
+if(noneerows<=1000, FORMAT(noneerows,"#.##"),
+    if(noneerows<=999999,FORMAT(noneerows/1000,"#.##K"),
+        IF(noneerows<=999999999,FORMAT(noneerows/1000000,"#.##M"),
+            IF(noneerows<=999999999999,FORMAT(noneerows/1000000000,"#.##bn"),
+                if(noneerows>=1000000000000,FORMAT(noneerows/1000000000000,"#.##tn"))))))
+
+VAR noneevolume = CALCULATE (
+    SUM (cl_NEW_TRANX[VOL]),
+    FILTER (
+        cl_NEW_TRANX ,cl_NEW_TRANX[nonee_STATUS] ="nonee"
+    )
+) -- sum of nonee volume and formated sum of nonee volume below
+var formated_noneevolume = 
+if(noneevolume<=1000, FORMAT(noneevolume,"#.##"),
+    if(noneevolume<=999999,FORMAT(noneevolume/1000,"#.##K"),
+        IF(noneevolume<=999999999,FORMAT(noneevolume/1000000,"#.##M"),
+            IF(noneevolume<=999999999999,FORMAT(noneevolume/1000000000,"#.##bn"),
+                if(noneevolume>=1000000000000,FORMAT(noneevolume/1000000000000,"#.##tn"))))))
+
+VAR TblCustomervolume =
+    SUMMARIZE(
+        FILTER(cl_NEW_TRANX,cl_NEW_TRANX[nonee_STATUS]="nonee"),'Calendar'[Month],
+    "TxnCustomervol",sum(cl_NEW_TRANX[VOL]) --summarize the table to get the dates and transaction volume
+    )
+    VAR highestcustomervolume = MAXX(TblCustomervolume,[TxnCustomervol]) -- HIGHEST txn volume
+    VAR formatedhighestcustomervol= if(highestcustomervolume<=1000, FORMAT(highestcustomervolume,"#,##"),
+    if(highestcustomervolume<=999999,FORMAT(highestcustomervolume/1000,"#.0K"),
+        IF(highestcustomervolume<=999999999,FORMAT(highestcustomervolume/1000000,"#.0M"),
+            IF(highestcustomervolume<=999999999999,FORMAT(highestcustomervolume/1000000000,"#.0bn"),
+                if(highestcustomervolume>=1000000000000,FORMAT(highestcustomervolume/1000000000000,"#.0tn"))))))--format the highest transaction volume
+Return
+if(ISBLANK(noneerows),whitecircle&"No transactions for the selected tier(s)",
+IF(ISFILTERED(tier_code[tier_NAME]),
+whitecircle&" For the period under consideration, a total of ~"&formated_noneerows&" unique showers did at least one ATM nonee generating ~"&formated_noneevolume&" nonee Volume."&UNICHAR(10)
+&whitecircle&" In "&CALCULATE(MAXX(FILTER(TblCustomervolume, [TxnCustomervol] = highestcustomervolume),'Calendar'[Month]))&", the tier incurred the highest nonee volume with total transaction volume of "&formatedhighestcustomervol&".",
+whitecircle&" For the period under consideration, a total of ~"&formated_noneerows&" unique showers did at least one ATM nonee generating ~"&formated_noneevolume&" nonee Volume. "&UNICHAR(10)
+&whitecircle&" In "&CALCULATE(MAXX(FILTER(TblCustomervolume, [TxnCustomervol] = highestcustomervolume),'Calendar'[Month]))&", the tier incurred the highest nonee volume with total transaction volume of "&formatedhighestcustomervol&"."
+))
+--
+txnmatrixsummary = 
+VAR whitecircle = UNICHAR (9898)
+VAR morethan3noneerows = COUNTROWS( --noneeROWS -- count of noneewrows
+  SUMMARIZE(
+     FILTER(nonee_FREQ_NARR,nonee_FREQ_NARR[noneeBAND] =">3 nonee"),
+    [shower]
+))
+VAR morethan3_2MONTHS = COUNTROWS( --noneeROWS -- count of noneewrows
+  SUMMARIZE(
+     FILTER(nonee_FREQ_NARR,nonee_FREQ_NARR[noneeBAND] =">3 nonee"&& nonee_FREQ_NARR[FREQUENCY]="2 Months"),
+    [shower]
+))
+VAR morethan3_1MONTH = COUNTROWS( --noneeROWS -- count of noneewrows
+  SUMMARIZE(
+     FILTER(nonee_FREQ_NARR,nonee_FREQ_NARR[noneeBAND] =">3 nonee"&&nonee_FREQ_NARR[FREQUENCY]="1 Month"),
+    [shower]
+))
+VAR morethan3_3MONTH = COUNTROWS( --noneeROWS -- count of noneewrows
+  SUMMARIZE(
+     FILTER(nonee_FREQ_NARR,nonee_FREQ_NARR[noneeBAND] =">3 nonee"&&nonee_FREQ_NARR[FREQUENCY]="3 Months"),
+    [shower]
+))
+VAR allnoneerows =DISTINCTCOUNT(nonee_FREQ_NARR[shower])
+VAR percentmorethan3 = morethan3noneerows/allnoneerows
+VAR percentmorethan3_2MONTHS = morethan3_2MONTHS/allnoneerows
+VAR percentmorethan3_1MONTH = morethan3_1MONTH/allnoneerows
+VAR percentmorethan3_3MONTH = morethan3_3MONTH/allnoneerows
+VAR F_percentmorethan3_2MONTHS =format(percentmorethan3_2MONTHS,"#%")
+VAR F_percentmorethan3_1MONTH = Format(percentmorethan3_1MONTH,"#%")
+VAR F_morethan3_3MONTH = FORMAT(percentmorethan3_3MONTH,"#%")
+VAR F_percentmorethan3 =format(percentmorethan3,"#%")
+VAR percentmorethan3NUM = FORMAT(percentmorethan3,"#.##")
+Return 
+if(ISBLANK(morethan3noneerows),if(ISBLANK(percentmorethan3_2MONTHS),if(ISBLANK(percentmorethan3_1MONTH),if(ISBLANK(percentmorethan3_3MONTH),whitecircle&"No transactions generated for the selected tier(s)"))),
+whitecircle&" "&F_percentmorethan3&
+" of the customers who generated nonee within the observed period generated >3 nonee."&unichar(10)&
+whitecircle&"Of those "&F_percentmorethan3&", "&F_percentmorethan3_2MONTHS&" generated transactions in 2 Months out of 3, "&F_percentmorethan3_1MONTH&" generated transactions in 1 Month out of 3, while "&F_morethan3_3MONTH&" generated transactions in all 3 Months.")
+--
+
+
