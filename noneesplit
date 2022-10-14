@@ -1,0 +1,83 @@
+noneeSPLITSUMMARY = 
+VAR whitecircle = UNICHAR (9898)
+VAR noneerows = COUNTROWS( --noneeROWS -- count of noneewrows
+  SUMMARIZE(
+     FILTER(cl_NEW_TRANX ,cl_NEW_TRANX[nonee_STATUS] ="nonee"),
+    [ACCOUNT]
+))
+var formated_noneerows = --formatted count of noneerows
+if(noneerows<=1000, FORMAT(noneerows,"#.##"),
+    if(noneerows<=999999,FORMAT(noneerows/1000,"#.##K"),
+        IF(noneerows<=999999999,FORMAT(noneerows/1000000,"#.##M"),
+            IF(noneerows<=999999999999,FORMAT(noneerows/1000000000,"#.##bn"),
+                if(noneerows>=1000000000000,FORMAT(noneerows/1000000000000,"#.##tn"))))))
+--getting the month with the highest distinct customer count for nonee
+VAR TblCustomerCount =
+    SUMMARIZE(
+        FILTER(cl_NEW_TRANX,cl_NEW_TRANX[nonee_STATUS]="nonee"),'Calendar'[Month],
+    "TxnCustomercount",DISTINCTCOUNT(cl_NEW_TRANX[ACCOUNT]) --summarize the table to get the dates and transaction volume
+    )
+    VAR Lowestcustomercount = MINX(TblCustomerCount,[TxnCustomercount]) -- lowest customercount
+    VAR lowestcustomermonth = MINX(TblCustomerCount,'Calendar'[Month])--lowest customer month 
+    VAR formatedlowestcustomercount= if(Lowestcustomercount<=1000, FORMAT(Lowestcustomercount,"#,##"),
+    if(Lowestcustomercount<=999999,FORMAT(Lowestcustomercount/1000,"#.0K"),
+        IF(Lowestcustomercount<=999999999,FORMAT(Lowestcustomercount/1000000,"#.0M"),
+            IF(Lowestcustomercount<=999999999999,FORMAT(Lowestcustomercount/1000000000,"#.0bn"),
+                if(Lowestcustomercount>=1000000000000,FORMAT(Lowestcustomercount/1000000000000,"#.0tn"))))))
+VAR neerows = COUNTROWS( --count of neerows
+  SUMMARIZE(
+     FILTER(cl_NEW_TRANX ,cl_NEW_TRANX[nonee_STATUS] ="ON US"),
+    [ACCOUNT]
+))
+var formated_neerows = --formated count of neerows
+if(neerows<=1000, FORMAT(neerows,"#.##"),
+    if(neerows<=999999,FORMAT(neerows/1000,"#.##K"),
+        IF(neerows<=999999999,FORMAT(neerows/1000000,"#.##M"),
+            IF(neerows<=999999999999,FORMAT(neerows/1000000000,"#.##bn"),
+                if(neerows>=1000000000000,FORMAT(neerows/1000000000000,"#.##tn"))))))
+
+VAR noneevolume = CALCULATE (
+    SUM (cl_NEW_TRANX[VOL]),
+    FILTER (
+        cl_NEW_TRANX ,cl_NEW_TRANX[nonee_STATUS] ="nonee"
+    )
+) -- sum of nonee volume and formated sum of nonee volume below
+var formated_noneevolume = 
+if(noneevolume<=1000, FORMAT(noneevolume,"#.##"),
+    if(noneevolume<=999999,FORMAT(noneevolume/1000,"#.##K"),
+        IF(noneevolume<=999999999,FORMAT(noneevolume/1000000,"#.##M"),
+            IF(noneevolume<=999999999999,FORMAT(noneevolume/1000000000,"#.##bn"),
+                if(noneevolume>=1000000000000,FORMAT(noneevolume/1000000000000,"#.##tn"))))))
+--sum of ou volume and formatted sum of ou volume below
+VAR ouvolume = CALCULATE (
+    SUM (cl_NEW_TRANX[VOL]),
+    FILTER (
+        cl_NEW_TRANX ,cl_NEW_TRANX[nonee_STATUS] ="ON US"
+    )
+) 
+var formated_ouvolume = 
+if(ouvolume<=1000, FORMAT(ouvolume,"#.##"),
+    if(ouvolume<=999999,FORMAT(ouvolume/1000,"#.##K"),
+        IF(ouvolume<=999999999,FORMAT(ouvolume/1000000,"#.##M"),
+            IF(ouvolume<=999999999999,FORMAT(ouvolume/1000000000,"#.##bn"),
+                if(ouvolume>=1000000000000,FORMAT(ouvolume/1000000000000,"#.##tn"))))))
+
+VAR TblCustomervolume =
+    SUMMARIZE(
+        FILTER(cl_NEW_TRANX,cl_NEW_TRANX[nonee_STATUS]="nonee"),'Calendar'[Month],
+    "TxnCustomervol",sum(cl_NEW_TRANX[VOL]) --summarize the table to get the dates and transaction volume
+    )
+    VAR Lowestcustomervolume = MINX(TblCustomervolume,[TxnCustomervol]) -- lowest txn volume
+    VAR lowestcustomermonthvol = MINX(TblCustomervolume,'Calendar'[Month])--lowest customer month 
+    VAR formatedlowestcustomervol= if(Lowestcustomervolume<=1000, FORMAT(Lowestcustomervolume,"#,##"),
+    if(Lowestcustomervolume<=999999,FORMAT(Lowestcustomervolume/1000,"#.0K"),
+        IF(Lowestcustomervolume<=999999999,FORMAT(Lowestcustomervolume/1000000,"#.0M"),
+            IF(Lowestcustomervolume<=999999999999,FORMAT(Lowestcustomervolume/1000000000,"#.0bn"),
+                if(Lowestcustomervolume>=1000000000000,FORMAT(Lowestcustomervolume/1000000000000,"#.0tn"))))))--format the lowest transaction volume
+Return
+IF(ISFILTERED(tier_code[tier_NAME]),
+whitecircle&" For the period under consideration, a total of ~"&formated_noneerows&" unique accounts did at least one term nonee. Compared to other months, the month of "&lowestcustomermonth&" had the lowest unique customer count in terms of nonee with a total count of "&formatedlowestcustomercount&unichar(10)&
+whitecircle&" With regards to volume of transactions, a total of ~"&formated_noneevolume&" was done as nonee transaction volume. Also, compared to other months, the month of "&lowestcustomermonthvol&" had the lowest transaction volume in terms of nonee with a total transaction volume of "&formatedlowestcustomervol&".",
+whitecircle&" For the period under consideration, a total of ~"&formated_noneerows&" unique accounts did at least one term nonee transaction while a total of "&formated_neerows& " unique accounts did at least one term ee transaction. Compared to other months, the month of "&lowestcustomermonth&" had the lowest unique customer count in terms of nonee with a total count of "&formatedlowestcustomercount&unichar(10)&
+whitecircle&" With regards to volume of transactions, a total of ~"&formated_noneevolume&" was done as nonee transaction volume while a total of "&formated_ouvolume&" was done as OU transaction volume. Also, compared to other months, the month of "&lowestcustomermonthvol&" had the lowest transaction volume in terms of nonee with a total transaction volume of "&formatedlowestcustomervol&"."
+)
