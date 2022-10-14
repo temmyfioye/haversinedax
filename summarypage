@@ -1,0 +1,98 @@
+SummaryPage = 
+VAR countaccountnum = CALCULATE(DISTINCTCOUNT(nonee_Data[account]))
+VAR nonee_PERCENT =  (sum('TXN SUMMARY'[tier_PAY])/sum('TXN SUMMARY'[TxnVol]))
+ RETURN 
+ UNICHAR(11044)&
+" For "&SELECTEDVALUE(CalendarTable[MonthName]," the selected months")&
+", a total of ~"&
+if(countaccountnum<=1000, FORMAT(countaccountnum,"#.##"),
+    if(countaccountnum<=999999,FORMAT(countaccountnum/1000,"#.##K"),
+        IF(countaccountnum<=999999999,FORMAT(countaccountnum/1000000,"#.##M"),
+            IF(countaccountnum<=999999999999,FORMAT(countaccountnum/1000000000,"#.##bn"),
+                if(countaccountnum>=1000000000000,FORMAT(countaccountnum/1000000000000,"#.##tn"))))))&
+" unique customers have generated terminal cash withdrawal using cl Debit cards."&
+UNICHAR(10)&
+ UNICHAR(11044)&" cl and it's customers have paid out a total of "&
+if([noneeIncurredtier plus noneeIncurredCust]<=1000, FORMAT([noneeIncurredtier plus noneeIncurredCust],"₦#.##"),
+    if([noneeIncurredtier plus noneeIncurredCust]<=999999,FORMAT([noneeIncurredtier plus noneeIncurredCust]/1000,"₦#.##K"),
+        IF([noneeIncurredtier plus noneeIncurredCust]<=999999999,FORMAT([noneeIncurredtier plus noneeIncurredCust]/1000000,"₦#.##M"),
+            IF([noneeIncurredtier plus noneeIncurredCust]<=999999999999,FORMAT([noneeIncurredtier plus noneeIncurredCust]/1000000000,"₦#.##bn"),
+                if([noneeIncurredtier plus noneeIncurredCust]>=1000000000000,FORMAT([noneeIncurredtier plus noneeIncurredCust]/1000000000000,"₦#.##tn"))))))&
+" for all its 'Remote On Us Transactions'."&
+UNICHAR(10)&
+UNICHAR(11044)&" "&
+ FORMAT(nonee_PERCENT,"#%")&" of the transaction volume i.e. "&
+ if([noneeIncurredtier]<=1000, FORMAT([noneeIncurredtier],"₦#.##"),
+    if([noneeIncurredtier]<=999999,FORMAT([noneeIncurredtier]/1000,"₦#.##K"),
+        IF([noneeIncurredtier]<=999999999,FORMAT([noneeIncurredtier]/1000000,"₦#.##M"),
+            IF([noneeIncurredtier]<=999999999999,FORMAT([noneeIncurredtier]/1000000000,"₦#.##bn"),
+                if([noneeIncurredtier]>=1000000000000,FORMAT([noneeIncurredtier]/1000000000000,"₦#.##tn"))))))
+ &" is incurred by the tier."
+ 
+ 
+ ----
+ SummarypageText = 
+VAR whitecircle = UNICHAR (9898)
+var allrows = DISTINCTCOUNT(cl_NEW_TRANX[ACCOUNT]) -- count distinct account ID
+var formated_allrows = 
+if(allrows<=1000, FORMAT(allrows,"#.##"),
+    if(allrows<=999999,FORMAT(allrows/1000,"#.##K"),
+        IF(allrows<=999999999,FORMAT(allrows/1000000,"#.##M"),
+            IF(allrows<=999999999999,FORMAT(allrows/1000000000,"#.##bn"),
+                if(allrows>=1000000000000,FORMAT(allrows/1000000000000,"#.##tn"))))))
+--return noneesrows &" ("&formatted_EEoverallrows&")"
+return
+whitecircle & " For "&SELECTEDVALUE('Calendar'[Month]," the selected Month(s)")&", a total of ~ "&formated_allrows&" unique customers have generated terminal transaction using cl Debit card."
+&UNICHAR(10)&whitecircle&[distinctacctnonee]&" of the debit cardholders used  their cl cards on other tiers terminal Machine thereby incurring Remote On Us charges on cl."
+&UNICHAR(10)&whitecircle&[distinctacctEE]&" of customers who generated terminal transactions use their cl debit cards on cl Terminals."
+&UNICHAR(10)&whitecircle&" Altogether, a total of " &[noneetxnvolume]&" Remote on Us transactions were generated between the time frame."
+--- daily transaction summary
+DailyTxnSummary = 
+VAR blackcircle = UNICHAR (9899)
+VAR TableVolTxn =
+    SUMMARIZE(cl_NEW_TRANX,Calendar[Date], 
+    "TxnVol", sum(cl_NEW_TRANX[VOL]) --summarize the table to get the dates and transaction volume
+    )
+VAR HighestTxnVol = MAXX(TableVolTxn,[TxnVol]) ---highest transaction volume
+VAR LowestTxnVol = MINX(TableVolTxn,[TxnVol]) -- lowest transaction volume
+VAR FormatedHighestTxnVol = if(HighestTxnVol<=1000, FORMAT(HighestTxnVol,"#,##"),
+    if(HighestTxnVol<=999999,FORMAT(HighestTxnVol/1000,"#.0K"),
+        IF(HighestTxnVol<=999999999,FORMAT(HighestTxnVol/1000000,"#.0M"),
+            IF(HighestTxnVol<=999999999999,FORMAT(HighestTxnVol/1000000000,"#.0bn"),
+                if(HighestTxnVol>=1000000000000,FORMAT(HighestTxnVol/1000000000000,"#.0tn"))))))--format the highest transaction volume
+VAR FormatedLowestTxnVol = if(LowestTxnVol<=1000, FORMAT(LowestTxnVol,"#,##"),
+    if(LowestTxnVol<=999999,FORMAT(LowestTxnVol/1000,"#.0K"),
+        IF(LowestTxnVol<=999999999,FORMAT(LowestTxnVol/1000000,"#.0M"),
+            IF(LowestTxnVol<=999999999999,FORMAT(LowestTxnVol/1000000000,"#.0bn"),
+                if(LowestTxnVol>=1000000000000,FORMAT(LowestTxnVol/1000000000000,"#.0tn"))))))--format the lowest transaction volume
+
+RETURN
+blackcircle & " For "&SELECTEDVALUE('Calendar'[Month],"the selected Month(s)")&", the day with the Highest Transaction volume is "&
+CALCULATE(MAXX(FILTER(TableVolTxn, [TxnVol] = HighestTxnVol), format((Calendar[Date]),"dd-MMM-yyyy"))&" with a volume of "&FormatedHighestTxnVol&" transactions."&unichar(10)&
+blackcircle&" While the day with the Lowest Transaction volume is "&
+CALCULATE(MAXX(FILTER(TableVolTxn, [TxnVol] = LowestTxnVol), format((Calendar[Date]),"dd-MMM-yyyy"))&" with a volume of "&FormatedLowestTxnVol&" transactions."))
+--hourly transaction summary
+HourlyTxnSummary = 
+VAR blackcircle = UNICHAR (9899)
+VAR TableVolTxnH =
+    SUMMARIZE(cl_NEW_TRANX,cl_NEW_TRANX[ampmhour], 
+    "TxnVolH", sum(cl_NEW_TRANX[VOL]) --summarize the table to get the HOUR and transaction volume
+    )
+VAR HighestTxnVolH = MAXX(TableVolTxnH,[TxnVolH]) ---highest transaction volume
+VAR LowestTxnVolH = MINX(TableVolTxnH,[TxnVolH]) -- lowest transaction volume
+VAR HighestTransactionHour = CALCULATE(MAXX(FILTER(TableVolTxnH, [TxnVolH] = HighestTxnVolH), cl_NEW_TRANX[ampmhour])) -- highest transaction hour
+VAR LowestTransactionHour = CALCULATE(MINX(FILTER(TableVolTxnH, [TxnVolH] = LowestTxnVolH), cl_NEW_TRANX[ampmhour])) -- LOWEST transaction hour
+VAR FormatedHighestTxnVolH = if(HighestTxnVolH<=1000, FORMAT(HighestTxnVolH,"#,##"),
+    if(HighestTxnVolH<=999999,FORMAT(HighestTxnVolH/1000,"#.0K"),
+        IF(HighestTxnVolH<=999999999,FORMAT(HighestTxnVolH/1000000,"#.0M"),
+            IF(HighestTxnVolH<=999999999999,FORMAT(HighestTxnVolH/1000000000,"#.0bn"),
+                if(HighestTxnVolH>=1000000000000,FORMAT(HighestTxnVolH/1000000000000,"#.0tn"))))))--format the highest transaction volume
+VAR FormattedLowestTxnVolH = if(LowestTxnVolH<=1000, FORMAT(LowestTxnVolH,"#,##"),
+    if(LowestTxnVolH<=999999,FORMAT(LowestTxnVolH/1000,"#.0K"),
+        IF(LowestTxnVolH<=999999999,FORMAT(LowestTxnVolH/1000000,"#.0M"),
+            IF(LowestTxnVolH<=999999999999,FORMAT(LowestTxnVolH/1000000000,"#.0bn"),
+                if(LowestTxnVolH>=1000000000000,FORMAT(LowestTxnVolH/1000000000000,"#.0tn"))))))--format the lowest transaction volume
+
+RETURN
+
+blackcircle & " For the selected dates, the hour with the Highest Transaction volume is "&HighestTransactionHour&" with total transaction volume of "&FormatedHighestTxnVolH&" while the hour with the Lowest Transaction volume is "&LowestTransactionHour&" with total transaction volume of "&FormattedLowestTxnVolH
